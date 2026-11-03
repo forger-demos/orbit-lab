@@ -30,3 +30,7 @@ Known limits to document in the product: the elements model the Earth-Moon baryc
 - [Keplerian Elements for Approximate Positions of the Major Planets, JPL SSD](https://ssd.jpl.nasa.gov/planets/approx_pos.html) (tables, ranges, accuracy, the algorithm)
 - [VSOP87 catalogue VI/81, CDS VizieR](https://vizier.cfa.harvard.edu/ftp/cats/vi/81/vsop87.txt)
 - Bretagnon and Francou, "Planetary theories in rectangular and spherical variables: VSOP87 solutions", Astronomy and Astrophysics 202, 309 (1988)
+
+## Checked against Horizons
+
+`src/core/ephemeris.test.ts` compares the shipped elements with fixed vectors taken from JPL Horizons (heliocentric, ecliptic, TDB) for all eight bodies at dates spread across 1900-2100. The JPL page's accuracy figures are typical errors, not bounds, so the test asserts the brief's bound directly: longitude within 0.25 degrees and distance within 0.5 percent, with no multiple applied. Re-take the vectors from the [Horizons API](https://ssd.jpl.nasa.gov/api/horizons.api) with `COMMAND` set to the body id (the Earth-Moon barycentre is `3`), `CENTER='500@10'`, `EPHEM_TYPE='VECTORS'` and `REF_PLANE='ECLIPTIC'`.

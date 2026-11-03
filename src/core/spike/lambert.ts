@@ -1,4 +1,4 @@
-import {add, cross, dot, norm, scale, sub, type Vec3} from './vec';
+import {add, cross, dot, norm, scale, sub, type Vec3} from '../vec';
 
 export interface LambertResult {
   v1: Vec3;
