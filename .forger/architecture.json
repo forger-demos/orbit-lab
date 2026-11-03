@@ -1,9 +1,12 @@
 {
   "layers": [
     {"name": "core", "paths": ["src/core/**"]},
-    {"name": "shell", "paths": ["src/shell/**"]}
+    {"name": "render", "paths": ["src/render/**"]},
+    {"name": "web", "paths": ["src/web/**"]},
+    {"name": "server", "paths": ["src/app.ts", "src/app.test.ts", "src/server.ts"]}
   ],
   "allow": {
-    "shell": ["core"]
+    "render": ["core"],
+    "web": ["core", "render"]
   }
 }

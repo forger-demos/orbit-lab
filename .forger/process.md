@@ -11,7 +11,7 @@ commands are generic; everything specific to THIS project lives here and in
 
 ## What this repo is
 
-<One paragraph: what the project is, where it sits in the stack, who consumes it.>
+A single page, served by a small Bun server from `public/`, that shows the solar system on a chosen date and a porkchop plot of launch windows between planets. All maths runs in the browser; nothing is fetched at run time. The brief is `docs/brief.md`, the decisions are in `docs/adr/`, the evidence in `docs/research/`, the build order in `docs/plan.md`.
 
 ## The gates
 
@@ -53,8 +53,13 @@ as enforced, not advisory.
   lands as a tested command with machine-readable output, not as prompt text.
   Pure logic is split from I/O, and side effects sit behind an injectable `CommandRunner`.
 - **Comments say why, never narrate a change.** History belongs in the commit.
-- <e.g. "Never delete data; removal means active = 0.">
-- <e.g. "Phase 1 is read-only; no writes outside a write-scoped ticket.">
+- **Core stays pure.** `src/core` imports nothing from `render`, `web` or `server`, and uses no DOM, network, random or current clock; time is always a parameter. `.forger/architecture.json` enforces the layers.
+- **No network, no keys.** Tests never touch the network and the page fetches nothing at run time. Reference data ships with the page.
+- **Cite or do not assert.** A published number (a launch C3, a date, an accuracy) enters a test or a doc only with a primary source linked in `docs/research/`. A value not found stays out; do not fill it in.
+- **Lambert failures are data, not exceptions.** A cell with no solution is blank. Nearly opposed position vectors (a 180 degree transfer) and non-convergence return a no-solution result.
+- **Units are explicit.** Core uses kilometres, seconds and km^2/s^2 for energy at the solver boundary and AU only inside the ephemeris; convert at the edge and name the unit in the identifier.
+- **Elements model the Earth-Moon barycentre and TT.** Do not label that as the Earth's centre or UTC in user-facing text.
+- **Do not narrate a change in comments or docs.** No counts or timings in durable docs; measure with a test.
 
 The retro refines this file over time: a lesson that holds for this project
 lands here by PR, and one that holds for every project goes upstream to forger.
