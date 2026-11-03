@@ -1,6 +1,6 @@
 # Build plan
 
-Each slice ends in something visible in a screenshot, names its acceptance, and keeps maths and data in `src/core` apart from drawing in `src/render` and wiring in `src/web` (see [ADR 5](adr/0005-layers-and-explanation.md)). Decisions are in `docs/adr/`, evidence in `docs/research/`. The spike code in `src/core/spike/` is the starting point for slices 1 and 3 and is moved, not rewritten.
+Each slice ends in something visible in a screenshot, names its acceptance, and keeps maths and data in `src/core` apart from drawing in `src/render` and wiring in `src/web` (see [ADR 5](adr/0005-layers-and-explanation.md)). Decisions are in `docs/adr/`, evidence in `docs/research/`. The solver and ephemeris began as a spike and now live in `src/core/`.
 
 ## Order
 

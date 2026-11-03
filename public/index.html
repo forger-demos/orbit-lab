@@ -20,6 +20,8 @@
   #day{flex:1;min-width:8rem;accent-color:var(--accent)}
   #play{min-width:5.5rem}
   #message{min-height:1.5em;margin:0;padding:0 1rem;color:var(--accent)}
+  #transfer{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1rem;padding:0 1rem .5rem}
+  #readout{margin:0;padding:0 1rem .5rem;min-height:1.5em}
   main{flex:1;min-height:0;display:flex}
   canvas{flex:1;width:100%;min-height:320px;display:block}
   footer{padding:.5rem 1rem;color:var(--muted);font-size:.85rem}
@@ -36,6 +38,12 @@
   <label class="grow">Day <input id="day" type="range" min="0" step="1" aria-label="Date slider, 1900 to 2100"></label>
   <span id="state" role="status" aria-live="polite"></span>
 </div>
+<div id="transfer" role="group" aria-label="Earth to Mars transfer">
+  <strong>Earth to Mars</strong>
+  <label>Launch <input id="launch" type="date" autocomplete="off"></label>
+  <label>Arrival <input id="arrival" type="date" autocomplete="off"></label>
+</div>
+<p id="readout" role="status" aria-live="polite">Choose a launch and an arrival date.</p>
 <p id="message" role="status" aria-live="polite"></p>
 <main><canvas id="view" role="img" aria-label="The eight planets on their orbits around the Sun, seen from above the ecliptic"></canvas></main>
 <footer>Looking down on the ecliptic. Distances from the Sun are drawn on a square-root scale so the inner planets are visible. Earth is the Earth-Moon barycentre.</footer>

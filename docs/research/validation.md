@@ -6,7 +6,7 @@ Question: which real launches and published numbers can the build check itself a
 
 Claim: a Lambert solve between Earth and Mars, with the JPL approximate ephemeris, reproduces a published departure energy within ten percent.
 
-Check (`src/core/spike/spike.test.ts`): Mars 2020 (Perseverance) launched 2020-07-30 at 11:50 UTC (7:50 a.m. EDT) and entered the Martian atmosphere on 2021-02-18 at 20:36:50 UTC. The heliocentric Lambert arc from the Earth-Moon barycentre at launch to Mars at entry gives a departure C3 of 14.494 km^2/s^2. The published separation C3 is 14.49 km^2/s^2. The difference is far inside the ten percent bar. Arrival v-infinity of the same arc is about 2.55 km/s.
+Check (`src/core/transfer.test.ts`): Mars 2020 (Perseverance) launched 2020-07-30 at 11:50 UTC (7:50 a.m. EDT) and entered the Martian atmosphere on 2021-02-18 at 20:36:50 UTC. The heliocentric Lambert arc from the Earth-Moon barycentre at launch to Mars at entry gives a departure C3 of 14.494 km^2/s^2. The published separation C3 is 14.49 km^2/s^2. The difference is far inside the ten percent bar. Arrival v-infinity of the same arc is about 2.55 km/s.
 
 Caveat recorded plainly: the agreement is closer than the ephemeris accuracy alone would promise, because small position errors largely cancel in C3. The tolerance in the test stays at ten percent, matching the brief, not at the observed difference.
 
