@@ -3,6 +3,7 @@ import {
   stepClock, timeMsOfDayIndex, wholeDay,
 } from '../core/clock';
 import {drawSolarSystem, type Palette} from '../render/draw-solar-system';
+import {describeTransfer} from './transfer-readout';
 import {formatDateInput, MAX_YEAR, MIN_YEAR, parseDateInput} from './date-input';
 
 const canvas = document.getElementById('view') as HTMLCanvasElement;
@@ -98,6 +99,17 @@ input.addEventListener('input', () => {
   clock = seek(clock, parsed.date.getTime());
   sync();
 });
+
+const launchInput = document.getElementById('launch') as HTMLInputElement;
+const arrivalInput = document.getElementById('arrival') as HTMLInputElement;
+const readout = document.getElementById('readout') as HTMLElement;
+launchInput.min = arrivalInput.min = input.min;
+launchInput.max = arrivalInput.max = input.max;
+function updateReadout(): void {
+  readout.textContent = describeTransfer(launchInput.value, arrivalInput.value);
+}
+launchInput.addEventListener('input', updateReadout);
+arrivalInput.addEventListener('input', updateReadout);
 
 new ResizeObserver(redraw).observe(canvas);
 window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', redraw);

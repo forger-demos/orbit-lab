@@ -12,6 +12,6 @@ Implement Izzo's 2015 algorithm for zero revolutions, in a pure module that retu
 
 ## Consequences
 
-- The spike solver already passes a textbook case and a real launch; it is promoted into the product module.
+- The solver passes a textbook case and a real launch and lives in `src/core/lambert.ts`.
 - A failed cell is blank in the plot, never a thrown error.
 - Tests carry known answers from Curtis and the validation note, never the network.

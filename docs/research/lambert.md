@@ -18,16 +18,17 @@ Question: which solver turns "leave Earth at this position, arrive at Mars at th
 
 ## Test cases
 
-- Curtis, "Orbital Mechanics for Engineering Students", Example 5.2: r1 = (5000, 10000, 2100) km, r2 = (-14600, 2500, 7000) km, 3600 s around Earth gives v1 = (-5.9925, 1.9254, 3.2456) km/s and v2 = (-3.3125, -4.1966, -0.38529) km/s. Reproduced by the spike solver within 2 m/s.
+- Curtis, "Orbital Mechanics for Engineering Students", Example 5.2: r1 = (5000, 10000, 2100) km, r2 = (-14600, 2500, 7000) km, 3600 s around Earth gives v1 = (-5.9925, 1.9254, 3.2456) km/s and v2 = (-3.3125, -4.1966, -0.38529) km/s. Reproduced by the solver within 2 m/s.
 - Energy conservation between the two ends of the returned arc (a property test).
 - The Perseverance transfer in `validation.md`.
-- Further cases to add in the build: the pykep test set and Izzo's published tables, a retrograde case, a hyperbolic case.
+- Retrograde and hyperbolic (fast flight) cases, nearly opposed vectors and invalid input, in `src/core/lambert.test.ts`.
+- Still to add: the pykep test set and Izzo's published tables.
 
 ## Result of the spike
 
-A single-revolution Izzo solver was written in about a hundred lines (`src/core/spike/lambert.ts`) and passes the Curtis case and the Perseverance check. It needs no tuning constants beyond a convergence tolerance.
+A single-revolution Izzo solver was written as a spike and has since been promoted to `src/core/lambert.ts`; it passes the Curtis case and the Perseverance check. It needs no tuning constants beyond a convergence tolerance.
 
-The spike also swept a grid of launch and arrival dates in 2020 with arrival after launch: Householder alone failed on short, hyperbolic flights (a real bug found by a test); a bisection fallback on the monotonic time-of-flight curve fixed it. A very small share of cells still fails, near the degenerate geometry above. The build must therefore handle a failed cell as blank and test that the grid function never throws.
+The spike also swept a grid of launch and arrival dates in 2020 with arrival after launch: Householder alone failed on short, hyperbolic flights (a real bug found by a test); a bisection fallback on the monotonic time-of-flight curve fixed it. A very small share of cells still fails, near the degenerate geometry above. A failed cell is a no-solution result, blank in the plot, and the sweep test in `src/core/transfer.test.ts` checks that no date pair throws.
 
 ## Recommendation
 
