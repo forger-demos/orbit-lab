@@ -22,8 +22,14 @@
   #message{min-height:1.5em;margin:0;padding:0 1rem;color:var(--accent)}
   #transfer{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1rem;padding:0 1rem .5rem}
   #readout{margin:0;padding:0 1rem .5rem;min-height:1.5em}
-  main{flex:1;min-height:0;display:flex}
-  canvas{flex:1;width:100%;min-height:320px;display:block}
+  main{flex:1;min-height:0;display:flex;flex-wrap:wrap}
+  #view{flex:1 1 24rem;width:100%;min-height:320px;display:block}
+  #plot{flex:1 1 24rem;min-width:0;display:flex;flex-direction:column}
+  #plot-head{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1rem;padding:0 1rem}
+  #plot-head h2{margin:0;font-size:1rem}
+  #porkchop{width:100%;height:26rem;display:block}
+  #plot-status{min-height:1.5em;margin:0;padding:0 1rem;color:var(--accent)}
+  #plot-key{margin:0;padding:0 1rem .5rem;color:var(--muted);font-size:.85rem}
   footer{padding:.5rem 1rem;color:var(--muted);font-size:.85rem}
 </style>
 </head>
@@ -45,7 +51,19 @@
 </div>
 <p id="readout" role="status" aria-live="polite">Choose a launch and an arrival date.</p>
 <p id="message" role="status" aria-live="polite"></p>
-<main><canvas id="view" role="img" aria-label="The eight planets on their orbits around the Sun, seen from above the ecliptic"></canvas></main>
+<main>
+  <canvas id="view" role="img" aria-label="The eight planets on their orbits around the Sun, seen from above the ecliptic"></canvas>
+  <section id="plot" aria-label="Earth to Mars launch windows">
+    <div id="plot-head">
+      <h2>Launch windows</h2>
+      <label>From <input id="plot-from" type="date" autocomplete="off"></label>
+      <button id="plot-retry" type="button" hidden>Retry</button>
+    </div>
+    <p id="plot-status" role="status" aria-live="polite"></p>
+    <canvas id="porkchop" role="img" aria-label="Porkchop plot for Earth to Mars: launch date across, arrival date up, coloured by departure C3 with arrival speed contours"></canvas>
+    <p id="plot-key">Colour is the departure C3 in km^2/s^2 (lower is cheaper); lines mark the arrival speed relative to Mars in km/s. Blank where no transfer exists. The bright islands are the launch windows.</p>
+  </section>
+</main>
 <footer>Looking down on the ecliptic. Distances from the Sun are drawn on a square-root scale so the inner planets are visible. Earth is the Earth-Moon barycentre.</footer>
 <script type="module" src="main.js"></script>
 </body>

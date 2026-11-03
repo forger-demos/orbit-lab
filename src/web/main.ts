@@ -3,6 +3,9 @@ import {
   stepClock, timeMsOfDayIndex, wholeDay,
 } from '../core/clock';
 import {drawSolarSystem, type Palette} from '../render/draw-solar-system';
+import {earthMarsSpec, type GridSpec, type PorkchopMessage} from '../core/porkchop';
+import {drawPorkchop} from '../render/draw-porkchop';
+import {applyMessage, initialPlotState, plotDataOf, type PlotState, statusText} from './porkchop-state';
 import {describeTransfer} from './transfer-readout';
 import {formatDateInput, MAX_YEAR, MIN_YEAR, parseDateInput} from './date-input';
 
@@ -111,7 +114,72 @@ function updateReadout(): void {
 launchInput.addEventListener('input', updateReadout);
 arrivalInput.addEventListener('input', updateReadout);
 
+const plotCanvas = document.getElementById('porkchop') as HTMLCanvasElement;
+const plotCtx = plotCanvas.getContext('2d')!;
+const plotFrom = document.getElementById('plot-from') as HTMLInputElement;
+const plotStatus = document.getElementById('plot-status') as HTMLElement;
+const plotRetry = document.getElementById('plot-retry') as HTMLButtonElement;
+plotFrom.min = input.min;
+plotFrom.max = input.max;
+plotFrom.value = `${now.getUTCFullYear()}-01-01`;
+
+let worker: Worker | null = null;
+let plotState: PlotState | null = null;
+
+function redrawPlot(): void {
+  if (!plotState) return;
+  const dpr = window.devicePixelRatio || 1;
+  const rect = plotCanvas.getBoundingClientRect();
+  plotCanvas.width = Math.round(rect.width * dpr);
+  plotCanvas.height = Math.round(rect.height * dpr);
+  plotCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const text = statusText(plotState);
+  drawPorkchop(plotCtx, {width: rect.width, height: rect.height}, plotDataOf(plotState), palette(), text ? {text} : null);
+}
+
+function failPlot(detail: string): void {
+  worker?.terminate();
+  worker = null;
+  plotStatus.textContent = `The launch plot could not be computed (${detail}).`;
+  plotRetry.hidden = false;
+  if (plotState) { plotState = {...plotState, phase: 'ready'}; redrawPlot(); }
+}
+
+function startPlot(): void {
+  worker?.terminate();
+  worker = null;
+  const parsed = parseDateInput(plotFrom.value);
+  if (!parsed.ok) {
+    plotStatus.textContent = `${parsed.message} The plot is unchanged.`;
+    return;
+  }
+  const spec: GridSpec = earthMarsSpec(parsed.date.getTime());
+  plotStatus.textContent = '';
+  plotRetry.hidden = true;
+  plotState = initialPlotState(spec);
+  redrawPlot();
+  try {
+    const mine = new Worker('porkchop-worker.js', {type: 'module'});
+    worker = mine;
+    mine.onmessage = (event: MessageEvent<PorkchopMessage>) => {
+      if (worker !== mine || !plotState) return;
+      plotState = applyMessage(plotState, event.data);
+      if (event.data.type !== 'band') redrawPlot();
+      if (event.data.type === 'done') { mine.terminate(); worker = null; }
+    };
+    mine.onerror = (event) => { if (worker === mine) failPlot(event.message || 'worker error'); };
+    mine.postMessage(spec);
+  } catch (error) {
+    failPlot(error instanceof Error ? error.message : 'worker unavailable');
+  }
+}
+
+plotFrom.addEventListener('change', startPlot);
+plotRetry.addEventListener('click', startPlot);
+
 new ResizeObserver(redraw).observe(canvas);
-window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', redraw);
+new ResizeObserver(redrawPlot).observe(plotCanvas);
+window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => { redraw(); redrawPlot(); });
 sync();
 redraw();
+startPlot();
