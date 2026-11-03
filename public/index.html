@@ -13,6 +13,12 @@
   label{display:flex;align-items:center;gap:.5rem;color:var(--muted)}
   input{font:inherit;color:var(--fg);background:transparent;border:1px solid var(--muted);border-radius:6px;padding:.25rem .5rem;color-scheme:inherit}
   input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  button,select{font:inherit;color:var(--fg);background:transparent;border:1px solid var(--muted);border-radius:6px;padding:.25rem .75rem;cursor:pointer;color-scheme:inherit}
+  button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  #controls{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1rem;padding:0 1rem .5rem}
+  .grow{flex:1 1 16rem}
+  #day{flex:1;min-width:8rem;accent-color:var(--accent)}
+  #play{min-width:5.5rem}
   #message{min-height:1.5em;margin:0;padding:0 1rem;color:var(--accent)}
   main{flex:1;min-height:0;display:flex}
   canvas{flex:1;width:100%;min-height:320px;display:block}
@@ -24,6 +30,12 @@
   <h1>orbit-lab</h1>
   <label>Date <input id="date" type="date" autocomplete="off"></label>
 </header>
+<div id="controls" role="group" aria-label="Time controls">
+  <button id="play" type="button" aria-label="Play">Play</button>
+  <label>Speed <select id="speed"></select></label>
+  <label class="grow">Day <input id="day" type="range" min="0" step="1" aria-label="Date slider, 1900 to 2100"></label>
+  <span id="state" role="status" aria-live="polite"></span>
+</div>
 <p id="message" role="status" aria-live="polite"></p>
 <main><canvas id="view" role="img" aria-label="The eight planets on their orbits around the Sun, seen from above the ecliptic"></canvas></main>
 <footer>Looking down on the ecliptic. Distances from the Sun are drawn on a square-root scale so the inner planets are visible. Earth is the Earth-Moon barycentre.</footer>
