@@ -1,8 +1,8 @@
 import {expect, test} from 'bun:test';
-import {AU_KM, positionAu} from './ephemeris';
+import {AU_KM, positionAu} from '../ephemeris';
 import {earthMarsTransfer} from './earth-mars';
 import {lambert} from './lambert';
-import {norm, sub} from './vec';
+import {norm, sub} from '../vec';
 
 test('Lambert reproduces Curtis, Orbital Mechanics for Engineering Students, example 5.2', () => {
   const {v1, v2} = lambert(398600, [5000, 10000, 2100], [-14600, 2500, 7000], 3600);

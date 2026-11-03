@@ -1,6 +1,6 @@
-import {AU_KM, MU_SUN_KM3_S2, positionAu, velocityKmS} from './ephemeris';
+import {AU_KM, MU_SUN_KM3_S2, positionAu, velocityKmS} from '../ephemeris';
 import {lambert} from './lambert';
-import {norm, scale, sub} from './vec';
+import {norm, scale, sub} from '../vec';
 
 export interface Transfer {
   c3: number;
