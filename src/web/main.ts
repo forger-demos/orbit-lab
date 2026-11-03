@@ -101,4 +101,5 @@ input.addEventListener('input', () => {
 
 new ResizeObserver(redraw).observe(canvas);
 window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', redraw);
+sync();
 redraw();
