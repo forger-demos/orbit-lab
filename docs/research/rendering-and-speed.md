@@ -16,6 +16,19 @@ Run the grid in a module Web Worker so the page stays responsive, post progress 
 
 Measure rather than assume: the plan includes a timing test on the pure grid function with a generous bound, and a documented grid size default chosen from a measurement.
 
+## Choosing the resolution
+
+The default is `DEFAULT_GRID_SAMPLES` in `src/core/porkchop.ts`. The method, so it can be repeated when the solver or the target devices change:
+
+1. Time `computeGrid` for the Earth to Mars spec at increasing samples per axis, in Bun on a laptop, with the full pipeline (ephemeris once per row and column, one Lambert solve per cell). Cost grows with the square of the samples, so the per-cell cost is the number to read off.
+2. Multiply by a generous slowdown allowance for a mid-range phone, then by the number of passes (the coarse pass is a small fraction of the fine one).
+3. Take the largest odd sample count whose scaled time stays within the brief's few seconds, and stop earlier once a cell is smaller than a device pixel on the narrowest layout: finer cells then add compute and no visible detail.
+4. Keep `samples - 1` divisible by the coarse factor so the coarse pass lands on the same plot edges as the fine pass.
+
+The timing test in `src/core/porkchop.test.ts` is a guard, not the measurement: its bound is far above the measured cost so it fails only on a structural regression such as recomputing the ephemeris per cell.
+
+The page paints the coarse pass as soon as the worker posts it, then repaints once all full-resolution bands have arrived. Partial fine bands are not painted on their own; the plot would be half sharp and half blank.
+
 ## Recommendation
 
 Canvas 2D for both views, one worker for the plot grid, resolution picked from a measured budget, and a lower-resolution first pass followed by refinement so the plot appears at once.

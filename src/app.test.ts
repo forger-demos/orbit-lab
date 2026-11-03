@@ -22,3 +22,10 @@ test('serves the bundled page script', async () => {
   expect(res.headers.get('content-type')).toContain('javascript');
   expect(await res.text()).toContain('getElementById');
 });
+
+test('serves the plot worker as its own script', async () => {
+  const res = await handle(new Request('http://x/porkchop-worker.js'));
+  expect(res.status).toBe(200);
+  expect(res.headers.get('content-type')).toContain('javascript');
+  expect(await res.text()).toContain('onmessage');
+});
