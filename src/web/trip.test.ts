@@ -5,11 +5,12 @@ import {bodyState} from '../core/transfer';
 import {norm, scale, sub} from '../core/vec';
 import {describeFlight, planTrip, stopAtArrival, tripOnDay} from './trip';
 
+const EARTH = 'earthMoonBarycenter';
 const DEPART = Date.UTC(2026, 9, 29);
 const ARRIVE = Date.UTC(2027, 7, 9);
 
 function plan() {
-  const r = planTrip(DEPART, ARRIVE);
+  const r = planTrip(EARTH, 'mars', DEPART, ARRIVE);
   if (!r.ok) throw new Error(r.message);
   return r.plan;
 }
@@ -28,14 +29,14 @@ test('no ship before launch; the ship starts at Earth and ends at Mars', () => {
 
 test('the same pick drawn twice is the same arc, and another pick replaces it', () => {
   const a = plan();
-  const b = planTrip(DEPART + 8 * 86_400_000, ARRIVE);
+  const b = planTrip(EARTH, 'mars', DEPART + 8 * 86_400_000, ARRIVE);
   if (!b.ok) throw new Error(b.message);
   expect(plan().pathAu).toEqual(a.pathAu);
   expect(b.plan.pathAu).not.toEqual(a.pathAu);
 });
 
 test('a pick with arrival before launch gives a message and no plan', () => {
-  const r = planTrip(ARRIVE, DEPART);
+  const r = planTrip(EARTH, 'mars', ARRIVE, DEPART);
   expect(r.ok).toBe(false);
   if (!r.ok) expect(r.message).toContain('arrival must be after launch');
 });
@@ -53,4 +54,12 @@ test('playback stops exactly at arrival and not before', () => {
 
 test('describes the flight in days', () => {
   expect(describeFlight(plan())).toBe('Showing a 284-day transfer.');
+});
+
+test('plans an arc for another pair that ends at the chosen destination', () => {
+  const r = planTrip(EARTH, 'venus', Date.UTC(2026, 9, 1), Date.UTC(2027, 1, 20));
+  if (!r.ok) throw new Error(r.message);
+  const end = r.plan.pathAu.at(-1)!;
+  const venus = scale(bodyState('venus', new Date(Date.UTC(2027, 1, 20))).rKm, 1 / AU_KM);
+  expect(norm(sub(end, venus))).toBeLessThan(0.01);
 });

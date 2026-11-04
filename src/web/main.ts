@@ -3,6 +3,8 @@ import {
   stepClock, timeMsOfDayIndex, wholeDay,
 } from '../core/clock';
 import {drawSolarSystem, type Palette} from '../render/draw-solar-system';
+import {BODIES, type Body} from '../core/ephemeris';
+import {BODY_NAMES, checkPair, pairSpec} from '../core/pair';
 import {earthMarsSpec, type GridSpec, type PorkchopMessage} from '../core/porkchop';
 import {drawPorkchop} from '../render/draw-porkchop';
 import {cellAtPoint, nearestMarker} from '../render/plot-geometry';
@@ -114,13 +116,31 @@ const readout = document.getElementById('readout') as HTMLElement;
 launchInput.min = arrivalInput.min = input.min;
 launchInput.max = arrivalInput.max = input.max;
 const showButton = document.getElementById('show-trip') as HTMLButtonElement;
+const originSelect = document.getElementById('origin') as HTMLSelectElement;
+const destinationSelect = document.getElementById('destination') as HTMLSelectElement;
+const pairTitle = document.getElementById('pair-title') as HTMLElement;
+const pairMessage = document.getElementById('pair-message') as HTMLElement;
+const EARTH: Body = 'earthMoonBarycenter';
+/** The pair the plot and the transfer controls currently work on; a refused selection never changes it. */
+let pair: {from: Body; to: Body} = {from: EARTH, to: 'mars'};
+for (const select of [originSelect, destinationSelect]) {
+  for (const body of BODIES) {
+    const option = document.createElement('option');
+    option.value = body;
+    option.textContent = BODY_NAMES[body];
+    select.append(option);
+  }
+}
+originSelect.value = pair.from;
+destinationSelect.value = pair.to;
+
 function updateReadout(): void {
-  readout.textContent = describeTransfer(launchInput.value, arrivalInput.value);
+  readout.textContent = describeTransfer(pair.from, pair.to, launchInput.value, arrivalInput.value);
 }
 
 /** Draws the transfer for a launch and arrival, moves the date to launch and plays to arrival. */
 function selectTrip(departMs: number, arriveMs: number): void {
-  const planned = planTrip(departMs, arriveMs);
+  const planned = planTrip(pair.from, pair.to, departMs, arriveMs);
   launchInput.value = formatDateInput(new Date(departMs));
   arrivalInput.value = formatDateInput(new Date(arriveMs));
   updateReadout();
@@ -172,6 +192,7 @@ let plotSelected: {departMs: number; arriveMs: number} | null = null;
 let launchMarkers: {label: string; departMs: number; arriveMs: number; best: {departMs: number; arriveMs: number} | null; tip: string}[] = [];
 
 function markersFor(spec: GridSpec): typeof launchMarkers {
+  if (spec.from !== EARTH || spec.to !== 'mars') return [];
   return REAL_LAUNCHES.filter((l) => launchOnGrid(spec, l)).map((l) => {
     const best = bestCellNear(spec, l);
     return {label: l.name, departMs: l.launchMs, arriveMs: l.arriveMs, best, tip: describeLaunch(l, best)};
@@ -205,7 +226,9 @@ function startPlot(): void {
     plotStatus.textContent = `${parsed.message} The plot is unchanged.`;
     return;
   }
-  const spec: GridSpec = earthMarsSpec(parsed.date.getTime());
+  const spec: GridSpec = pair.from === EARTH && pair.to === 'mars'
+    ? earthMarsSpec(parsed.date.getTime())
+    : pairSpec(pair.from, pair.to, parsed.date.getTime());
   plotStatus.textContent = '';
   plotRetry.hidden = true;
   plotState = initialPlotState(spec);
@@ -240,6 +263,31 @@ plotCanvas.addEventListener('mousemove', (event) => {
   const i = nearestMarker(event.clientX - rect.left, event.clientY - rect.top, {width: rect.width, height: rect.height}, plotState.spec, launchMarkers);
   plotCanvas.title = i >= 0 ? launchMarkers[i]!.tip : '';
 });
+function changePair(): void {
+  const from = originSelect.value as Body;
+  const to = destinationSelect.value as Body;
+  const check = checkPair(from, to);
+  if (!check.ok) {
+    pairMessage.textContent = check.message;
+    return;
+  }
+  pairMessage.textContent = '';
+  pair = {from, to};
+  const names = `${BODY_NAMES[from]} to ${BODY_NAMES[to]}`;
+  pairTitle.textContent = names;
+  document.getElementById('plot')!.setAttribute('aria-label', `${names} launch windows`);
+  plotCanvas.setAttribute('aria-label', `Porkchop plot for ${names}: launch date across, arrival date up, coloured by departure C3 with arrival speed contours`);
+  tripPlan = null;
+  plotSelected = null;
+  clock = pause(clock);
+  message.textContent = '';
+  updateReadout();
+  sync();
+  redraw();
+  startPlot();
+}
+originSelect.addEventListener('change', changePair);
+destinationSelect.addEventListener('change', changePair);
 plotFrom.addEventListener('change', startPlot);
 plotRetry.addEventListener('click', startPlot);
 
