@@ -30,6 +30,18 @@
   #porkchop{width:100%;height:26rem;display:block}
   #plot-status{min-height:1.5em;margin:0;padding:0 1rem;color:var(--accent)}
   #plot-key{margin:0;padding:0 1rem .5rem;color:var(--muted);font-size:.85rem}
+  #explain{flex:1 1 20rem;min-width:0;max-width:44rem;margin:0 1rem 1rem;padding:.5rem 1rem;border:1px solid var(--muted);border-radius:8px}
+  #explain summary{cursor:pointer;font-weight:600;padding:.25rem 0;min-height:44px;display:flex;align-items:center}
+  #explain summary:focus-visible,#explain a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  #explain a{color:var(--accent)}
+  #explain p{margin:.5rem 0}
+  #explain ul{margin:.25rem 0 .5rem;padding-left:1.25rem}
+  @media (max-width:40rem){
+    header,#controls,#transfer{gap:.5rem}
+    #porkchop{height:20rem}
+    select,button,input{min-height:44px}
+    #day{min-height:0}
+  }
   footer{padding:.5rem 1rem;color:var(--muted);font-size:.85rem}
 </style>
 </head>
@@ -67,6 +79,12 @@
     <canvas id="porkchop" role="img" style="cursor:crosshair" aria-label="Porkchop plot for the chosen pair of planets: launch date across, arrival date up, coloured by departure C3 with arrival speed contours"></canvas>
     <p id="plot-key">Colour is the departure C3 in km^2/s^2 (lower is cheaper); lines mark the arrival speed relative to the destination in km/s. Blank where no transfer exists. The bright islands are the launch windows. Click a cell to draw that transfer and fly it.</p>
   </section>
+  <details id="explain" open>
+    <summary>How to read this</summary>
+    <div id="explain-body"></div>
+    <p>Sources:</p>
+    <ul id="explain-sources"></ul>
+  </details>
 </main>
 <footer>Looking down on the ecliptic. Distances from the Sun are drawn on a square-root scale so the inner planets are visible. Earth is the Earth-Moon barycentre.</footer>
 <script type="module" src="main.js"></script>
