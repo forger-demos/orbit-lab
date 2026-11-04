@@ -5,7 +5,8 @@ import {
 import {drawSolarSystem, type Palette} from '../render/draw-solar-system';
 import {earthMarsSpec, type GridSpec, type PorkchopMessage} from '../core/porkchop';
 import {drawPorkchop} from '../render/draw-porkchop';
-import {cellAtPoint} from '../render/plot-geometry';
+import {cellAtPoint, nearestMarker} from '../render/plot-geometry';
+import {bestCellNear, describeLaunch, launchOnGrid, REAL_LAUNCHES} from '../core/launches';
 import {applyMessage, initialPlotState, plotDataOf, type PlotState, statusText} from './porkchop-state';
 import {describeFlight, planTrip, stopAtArrival, type TripPlan, tripOnDay} from './trip';
 import {describeTransfer} from './transfer-readout';
@@ -168,6 +169,14 @@ plotFrom.value = `${now.getUTCFullYear()}-01-01`;
 let worker: Worker | null = null;
 let plotState: PlotState | null = null;
 let plotSelected: {departMs: number; arriveMs: number} | null = null;
+let launchMarkers: {label: string; departMs: number; arriveMs: number; best: {departMs: number; arriveMs: number} | null; tip: string}[] = [];
+
+function markersFor(spec: GridSpec): typeof launchMarkers {
+  return REAL_LAUNCHES.filter((l) => launchOnGrid(spec, l)).map((l) => {
+    const best = bestCellNear(spec, l);
+    return {label: l.name, departMs: l.launchMs, arriveMs: l.arriveMs, best, tip: describeLaunch(l, best)};
+  });
+}
 
 function redrawPlot(): void {
   if (!plotState) return;
@@ -177,7 +186,7 @@ function redrawPlot(): void {
   plotCanvas.height = Math.round(rect.height * dpr);
   plotCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const text = statusText(plotState);
-  drawPorkchop(plotCtx, {width: rect.width, height: rect.height}, {...plotDataOf(plotState), selected: plotSelected}, palette(), text ? {text} : null);
+  drawPorkchop(plotCtx, {width: rect.width, height: rect.height}, {...plotDataOf(plotState), selected: plotSelected, launches: launchMarkers}, palette(), text ? {text} : null);
 }
 
 function failPlot(detail: string): void {
@@ -200,6 +209,8 @@ function startPlot(): void {
   plotStatus.textContent = '';
   plotRetry.hidden = true;
   plotState = initialPlotState(spec);
+  launchMarkers = markersFor(spec);
+  plotCanvas.title = '';
   redrawPlot();
   try {
     const mine = new Worker('porkchop-worker.js', {type: 'module'});
@@ -222,6 +233,12 @@ plotCanvas.addEventListener('click', (event) => {
   const rect = plotCanvas.getBoundingClientRect();
   const cell = cellAtPoint(event.clientX - rect.left, event.clientY - rect.top, {width: rect.width, height: rect.height}, plotState.spec);
   if (cell) selectTrip(cell.departMs, cell.arriveMs);
+});
+plotCanvas.addEventListener('mousemove', (event) => {
+  if (!plotState) return;
+  const rect = plotCanvas.getBoundingClientRect();
+  const i = nearestMarker(event.clientX - rect.left, event.clientY - rect.top, {width: rect.width, height: rect.height}, plotState.spec, launchMarkers);
+  plotCanvas.title = i >= 0 ? launchMarkers[i]!.tip : '';
 });
 plotFrom.addEventListener('change', startPlot);
 plotRetry.addEventListener('click', startPlot);

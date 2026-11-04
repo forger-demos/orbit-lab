@@ -27,3 +27,29 @@ export function cellAtPoint(
     arriveMs: spec.arriveStartMs + row * spec.arriveStepDays * MS_PER_DAY,
   };
 }
+
+/** Canvas position of a launch and arrival date pair, or null when it falls outside the plot. */
+export function pointOfDates(
+  departMs: number, arriveMs: number, view: Viewport, spec: GridSpec,
+): {x: number; y: number} | null {
+  const r = plotRect(view);
+  const x = r.x + ((((departMs - spec.departStartMs) / (spec.departStepDays * MS_PER_DAY)) + 0.5) / spec.cols) * r.w;
+  const y = r.y + r.h - ((((arriveMs - spec.arriveStartMs) / (spec.arriveStepDays * MS_PER_DAY)) + 0.5) / spec.rows) * r.h;
+  return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h ? {x, y} : null;
+}
+
+/** The nearest of the given dated points within `radius` pixels of (x, y), or -1. */
+export function nearestMarker(
+  x: number, y: number, view: Viewport, spec: GridSpec,
+  markers: readonly {departMs: number; arriveMs: number}[], radius = 12,
+): number {
+  let best = -1;
+  let bestDistance = radius;
+  markers.forEach((m, i) => {
+    const p = pointOfDates(m.departMs, m.arriveMs, view, spec);
+    if (!p) return;
+    const d = Math.hypot(p.x - x, p.y - y);
+    if (d <= bestDistance) { best = i; bestDistance = d; }
+  });
+  return best;
+}
