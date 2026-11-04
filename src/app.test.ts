@@ -29,3 +29,10 @@ test('serves the plot worker as its own script', async () => {
   expect(res.headers.get('content-type')).toContain('javascript');
   expect(await res.text()).toContain('onmessage');
 });
+
+test('the page carries the explanation panel and its source list', async () => {
+  const html = await (await handle(new Request('http://x/'))).text();
+  expect(html).toContain('id="explain"');
+  expect(html).toContain('id="explain-body"');
+  expect(html).toContain('id="explain-sources"');
+});

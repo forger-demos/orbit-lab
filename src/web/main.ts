@@ -11,6 +11,7 @@ import {cellAtPoint, nearestMarker} from '../render/plot-geometry';
 import {bestCellNear, describeLaunch, launchOnGrid, REAL_LAUNCHES} from '../core/launches';
 import {applyMessage, initialPlotState, plotDataOf, type PlotState, statusText} from './porkchop-state';
 import {describeFlight, planTrip, stopAtArrival, type TripPlan, tripOnDay} from './trip';
+import {EXPLANATION_SOURCES, explanationParagraphs} from './explanation';
 import {describeTransfer} from './transfer-readout';
 import {formatDateInput, MAX_YEAR, MIN_YEAR, parseDateInput} from './date-input';
 
@@ -263,6 +264,27 @@ plotCanvas.addEventListener('mousemove', (event) => {
   const i = nearestMarker(event.clientX - rect.left, event.clientY - rect.top, {width: rect.width, height: rect.height}, plotState.spec, launchMarkers);
   plotCanvas.title = i >= 0 ? launchMarkers[i]!.tip : '';
 });
+const explainPanel = document.getElementById('explain') as HTMLDetailsElement;
+const explainBody = document.getElementById('explain-body') as HTMLElement;
+const explainSources = document.getElementById('explain-sources') as HTMLElement;
+if (window.matchMedia('(max-width: 40rem)').matches) explainPanel.open = false;
+for (const source of EXPLANATION_SOURCES) {
+  const link = document.createElement('a');
+  link.href = source.url;
+  link.textContent = source.label;
+  link.rel = 'noopener';
+  const item = document.createElement('li');
+  item.append(link);
+  explainSources.append(item);
+}
+function renderExplanation(): void {
+  explainBody.replaceChildren(...explanationParagraphs(pair.from, pair.to).map((text) => {
+    const p = document.createElement('p');
+    p.textContent = text;
+    return p;
+  }));
+}
+renderExplanation();
 function changePair(): void {
   const from = originSelect.value as Body;
   const to = destinationSelect.value as Body;
@@ -273,6 +295,7 @@ function changePair(): void {
   }
   pairMessage.textContent = '';
   pair = {from, to};
+  renderExplanation();
   const names = `${BODY_NAMES[from]} to ${BODY_NAMES[to]}`;
   pairTitle.textContent = names;
   document.getElementById('plot')!.setAttribute('aria-label', `${names} launch windows`);
