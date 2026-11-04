@@ -1,6 +1,6 @@
 import {type Arc, arcStateAt, buildArc} from '../core/arc';
 import {type ClockState, MS_PER_DAY, pause, seek, wholeDay} from '../core/clock';
-import {AU_KM} from '../core/ephemeris';
+import {AU_KM, type Body} from '../core/ephemeris';
 import {scale, type Vec3} from '../core/vec';
 import {type Trip} from '../render/draw-solar-system';
 
@@ -13,8 +13,8 @@ export type PlanResult = {ok: true; plan: TripPlan} | {ok: false; message: strin
 
 const toAu = (km: Vec3): Vec3 => scale(km, 1 / AU_KM);
 
-export function planTrip(departMs: number, arriveMs: number): PlanResult {
-  const arc = buildArc('earthMoonBarycenter', 'mars', departMs, arriveMs);
+export function planTrip(from: Body, to: Body, departMs: number, arriveMs: number): PlanResult {
+  const arc = buildArc(from, to, departMs, arriveMs);
   if (!arc.ok) {
     return {
       ok: false,
@@ -39,7 +39,7 @@ export function tripOnDay(plan: TripPlan, day: Date): Trip {
   return {pathAu: plan.pathAu, shipAu: state ? toAu(state.rKm) : null};
 }
 
-/** Ends playback exactly at arrival so the ship meets Mars rather than running past it. */
+/** Ends playback exactly at arrival so the ship meets its destination rather than running past it. */
 export function stopAtArrival(clock: ClockState, arriveMs: number): ClockState {
   return clock.playing && clock.timeMs >= arriveMs ? pause(seek(clock, arriveMs)) : clock;
 }
