@@ -1,19 +1,13 @@
-const publicDir = new URL('../public/', import.meta.url);
-const scripts: Record<string, string> = {
-  '/main.js': new URL('./web/main.ts', import.meta.url).pathname,
-  '/porkchop-worker.js': new URL('./web/porkchop-worker.ts', import.meta.url).pathname,
-};
+import {bundleScript, scripts} from './entries';
 
+const publicDir = new URL('../public/', import.meta.url);
 const bundles = new Map<string, Promise<string>>();
 
 // Built on first request and kept; the page ships its own maths, so there is nothing to fetch at run time.
 function bundleOf(entrypoint: string): Promise<string> {
   let bundle = bundles.get(entrypoint);
   if (!bundle) {
-    bundle = Bun.build({entrypoints: [entrypoint], target: 'browser'}).then(async (out) => {
-      if (!out.success) throw new Error(out.logs.map(String).join('\n'));
-      return out.outputs[0]!.text();
-    });
+    bundle = bundleScript(entrypoint, false);
     bundle.catch(() => bundles.delete(entrypoint));
     bundles.set(entrypoint, bundle);
   }
