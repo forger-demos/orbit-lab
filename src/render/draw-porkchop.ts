@@ -3,7 +3,7 @@ import {type GridSpec} from '../core/porkchop';
 import {C3_SCALE_MAX, c3Colour, heatmapPixels} from './colour-scale';
 import {yearTicks} from './date-ticks';
 import {type Palette} from './draw-solar-system';
-import {plotRect} from './plot-geometry';
+import {plotRect, pointOfDates} from './plot-geometry';
 import {type Viewport} from './projection';
 
 export interface ContourLevel {
@@ -19,6 +19,15 @@ export interface PlotData {
   contours: readonly ContourLevel[];
   /** The picked launch and arrival, as dates, so the marker lands right on the coarse and the fine grid alike. */
   selected?: {departMs: number; arriveMs: number} | null;
+  /** Real launches placed at their actual dates, each with the best cell found near it. */
+  launches?: readonly LaunchMarker[];
+}
+
+export interface LaunchMarker {
+  label: string;
+  departMs: number;
+  arriveMs: number;
+  best: {departMs: number; arriveMs: number} | null;
 }
 
 export interface PlotStatus {
@@ -103,6 +112,36 @@ export function drawPorkchop(
         ctx.stroke();
       }
     }
+  }
+
+    for (const m of plot.launches ?? []) {
+    const p = pointOfDates(m.departMs, m.arriveMs, view, spec);
+    if (!p) continue;
+    const b = m.best ? pointOfDates(m.best.departMs, m.best.arriveMs, view, spec) : null;
+    for (const [width, colour] of [[4, palette.background], [2, palette.foreground]] as const) {
+      ctx.lineWidth = width;
+      ctx.strokeStyle = colour;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y - 7);
+      ctx.lineTo(p.x + 7, p.y);
+      ctx.lineTo(p.x, p.y + 7);
+      ctx.lineTo(p.x - 7, p.y);
+      ctx.closePath();
+      if (b) {
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.moveTo(b.x + 3, b.y);
+        ctx.arc(b.x, b.y, 3, 0, 2 * Math.PI);
+      }
+      ctx.stroke();
+    }
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'bottom';
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = palette.background;
+    ctx.strokeText(m.label, p.x + 9, p.y - 6);
+    ctx.fillStyle = palette.foreground;
+    ctx.fillText(m.label, p.x + 9, p.y - 6);
   }
 
   ctx.strokeStyle = palette.muted;
