@@ -2,6 +2,8 @@
 
 See the solar system on any date and find the launch windows to other planets.
 
+> Built with [forger](https://github.com/diegoaltoworks/forger), an unattended development loop: every change here came from an issue, was built by an agent on its own branch, and merged only after the gates, CI and an independent verifier passed. See the [forger README](https://github.com/diegoaltoworks/forger#readme) for how it works.
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/index-desktop-dark.png">
   <img alt="The eight planets on their orbits beside a porkchop plot of Earth to Mars launch windows" src="docs/screenshots/index-desktop-light.png">
