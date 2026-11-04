@@ -3,6 +3,7 @@ import {type GridSpec} from '../core/porkchop';
 import {C3_SCALE_MAX, c3Colour, heatmapPixels} from './colour-scale';
 import {yearTicks} from './date-ticks';
 import {type Palette} from './draw-solar-system';
+import {plotRect} from './plot-geometry';
 import {type Viewport} from './projection';
 
 export interface ContourLevel {
@@ -16,29 +17,19 @@ export interface PlotData {
   /** Null until the first pass arrives; the axes draw without it. */
   c3Km2S2: Float32Array | null;
   contours: readonly ContourLevel[];
+  /** The picked launch and arrival, as dates, so the marker lands right on the coarse and the fine grid alike. */
+  selected?: {departMs: number; arriveMs: number} | null;
 }
 
 export interface PlotStatus {
   text: string;
 }
 
-const MARGIN = {left: 54, right: 14, top: 14, bottom: 70};
-
 function hexToRgb(colour: string): [number, number, number] {
   const m = /^#([0-9a-f]{6})$/i.exec(colour.trim());
   if (!m) return [128, 128, 128];
   const n = parseInt(m[1]!, 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-}
-
-/** Where the plot rectangle sits inside the canvas. */
-export function plotRect(view: Viewport): {x: number; y: number; w: number; h: number} {
-  return {
-    x: MARGIN.left,
-    y: MARGIN.top,
-    w: Math.max(1, view.width - MARGIN.left - MARGIN.right),
-    h: Math.max(1, view.height - MARGIN.top - MARGIN.bottom),
-  };
 }
 
 /**
@@ -93,6 +84,24 @@ export function drawPorkchop(
       ctx.strokeText(String(level), x, y);
       ctx.fillStyle = palette.foreground;
       ctx.fillText(String(level), x, y);
+    }
+  }
+
+  if (plot.selected) {
+    const x = gx((plot.selected.departMs - spec.departStartMs) / (spec.departStepDays * MS_PER_DAY));
+    const y = gy((plot.selected.arriveMs - spec.arriveStartMs) / (spec.arriveStepDays * MS_PER_DAY));
+    if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) {
+      for (const [width, colour] of [[4, palette.background], [2, palette.foreground]] as const) {
+        ctx.lineWidth = width;
+        ctx.strokeStyle = colour;
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, 2 * Math.PI);
+        ctx.moveTo(x - 11, y);
+        ctx.lineTo(x + 11, y);
+        ctx.moveTo(x, y - 11);
+        ctx.lineTo(x, y + 11);
+        ctx.stroke();
+      }
     }
   }
 

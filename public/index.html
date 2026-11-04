@@ -48,6 +48,7 @@
   <strong>Earth to Mars</strong>
   <label>Launch <input id="launch" type="date" autocomplete="off"></label>
   <label>Arrival <input id="arrival" type="date" autocomplete="off"></label>
+  <button id="show-trip" type="button">Show transfer</button>
 </div>
 <p id="readout" role="status" aria-live="polite">Choose a launch and an arrival date.</p>
 <p id="message" role="status" aria-live="polite"></p>
@@ -60,8 +61,8 @@
       <button id="plot-retry" type="button" hidden>Retry</button>
     </div>
     <p id="plot-status" role="status" aria-live="polite"></p>
-    <canvas id="porkchop" role="img" aria-label="Porkchop plot for Earth to Mars: launch date across, arrival date up, coloured by departure C3 with arrival speed contours"></canvas>
-    <p id="plot-key">Colour is the departure C3 in km^2/s^2 (lower is cheaper); lines mark the arrival speed relative to Mars in km/s. Blank where no transfer exists. The bright islands are the launch windows.</p>
+    <canvas id="porkchop" role="img" style="cursor:crosshair" aria-label="Porkchop plot for Earth to Mars: launch date across, arrival date up, coloured by departure C3 with arrival speed contours"></canvas>
+    <p id="plot-key">Colour is the departure C3 in km^2/s^2 (lower is cheaper); lines mark the arrival speed relative to Mars in km/s. Blank where no transfer exists. The bright islands are the launch windows. Click a cell to draw that transfer and fly it.</p>
   </section>
 </main>
 <footer>Looking down on the ecliptic. Distances from the Sun are drawn on a square-root scale so the inner planets are visible. Earth is the Earth-Moon barycentre.</footer>

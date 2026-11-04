@@ -5,7 +5,9 @@ import {
 import {drawSolarSystem, type Palette} from '../render/draw-solar-system';
 import {earthMarsSpec, type GridSpec, type PorkchopMessage} from '../core/porkchop';
 import {drawPorkchop} from '../render/draw-porkchop';
+import {cellAtPoint} from '../render/plot-geometry';
 import {applyMessage, initialPlotState, plotDataOf, type PlotState, statusText} from './porkchop-state';
+import {describeFlight, planTrip, stopAtArrival, type TripPlan, tripOnDay} from './trip';
 import {describeTransfer} from './transfer-readout';
 import {formatDateInput, MAX_YEAR, MIN_YEAR, parseDateInput} from './date-input';
 
@@ -25,6 +27,7 @@ let clock: ClockState = seek(
   Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
 );
 let current = wholeDay(clock.timeMs);
+let tripPlan: TripPlan | null = null;
 slider.max = String(CLOCK_SPAN_DAYS);
 for (const speed of SPEEDS_DAYS_PER_SECOND) {
   const option = document.createElement('option');
@@ -49,7 +52,7 @@ function redraw(): void {
   canvas.width = Math.round(rect.width * dpr);
   canvas.height = Math.round(rect.height * dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  drawSolarSystem(ctx, {width: rect.width, height: rect.height}, current, palette());
+  drawSolarSystem(ctx, {width: rect.width, height: rect.height}, current, palette(), tripPlan ? tripOnDay(tripPlan, current) : null);
 }
 
 function sync(): void {
@@ -74,6 +77,7 @@ let last: number | null = null;
 function frame(timestamp: number): void {
   if (!clock.playing) { last = null; return; }
   if (last !== null) clock = stepClock(clock, timestamp - last);
+  if (tripPlan) clock = stopAtArrival(clock, tripPlan.arc.arriveMs);
   last = timestamp;
   sync();
   if (clock.playing) requestAnimationFrame(frame);
@@ -108,9 +112,47 @@ const arrivalInput = document.getElementById('arrival') as HTMLInputElement;
 const readout = document.getElementById('readout') as HTMLElement;
 launchInput.min = arrivalInput.min = input.min;
 launchInput.max = arrivalInput.max = input.max;
+const showButton = document.getElementById('show-trip') as HTMLButtonElement;
 function updateReadout(): void {
   readout.textContent = describeTransfer(launchInput.value, arrivalInput.value);
 }
+
+/** Draws the transfer for a launch and arrival, moves the date to launch and plays to arrival. */
+function selectTrip(departMs: number, arriveMs: number): void {
+  const planned = planTrip(departMs, arriveMs);
+  launchInput.value = formatDateInput(new Date(departMs));
+  arrivalInput.value = formatDateInput(new Date(arriveMs));
+  updateReadout();
+  if (!planned.ok) {
+    tripPlan = null;
+    plotSelected = null;
+    clock = pause(clock);
+    message.textContent = planned.message;
+    sync();
+    redraw();
+    redrawPlot();
+    return;
+  }
+  tripPlan = planned.plan;
+  plotSelected = {departMs, arriveMs};
+  message.textContent = describeFlight(planned.plan);
+  clock = play(seek(clock, departMs));
+  last = null;
+  sync();
+  redraw();
+  redrawPlot();
+  requestAnimationFrame(frame);
+}
+
+showButton.addEventListener('click', () => {
+  const launch = parseDateInput(launchInput.value);
+  const arrival = parseDateInput(arrivalInput.value);
+  if (!launch.ok || !arrival.ok) {
+    message.textContent = 'Enter a launch and an arrival date first.';
+    return;
+  }
+  selectTrip(launch.date.getTime(), arrival.date.getTime());
+});
 launchInput.addEventListener('input', updateReadout);
 arrivalInput.addEventListener('input', updateReadout);
 
@@ -125,6 +167,7 @@ plotFrom.value = `${now.getUTCFullYear()}-01-01`;
 
 let worker: Worker | null = null;
 let plotState: PlotState | null = null;
+let plotSelected: {departMs: number; arriveMs: number} | null = null;
 
 function redrawPlot(): void {
   if (!plotState) return;
@@ -134,7 +177,7 @@ function redrawPlot(): void {
   plotCanvas.height = Math.round(rect.height * dpr);
   plotCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const text = statusText(plotState);
-  drawPorkchop(plotCtx, {width: rect.width, height: rect.height}, plotDataOf(plotState), palette(), text ? {text} : null);
+  drawPorkchop(plotCtx, {width: rect.width, height: rect.height}, {...plotDataOf(plotState), selected: plotSelected}, palette(), text ? {text} : null);
 }
 
 function failPlot(detail: string): void {
@@ -174,6 +217,12 @@ function startPlot(): void {
   }
 }
 
+plotCanvas.addEventListener('click', (event) => {
+  if (!plotState) return;
+  const rect = plotCanvas.getBoundingClientRect();
+  const cell = cellAtPoint(event.clientX - rect.left, event.clientY - rect.top, {width: rect.width, height: rect.height}, plotState.spec);
+  if (cell) selectTrip(cell.departMs, cell.arriveMs);
+});
 plotFrom.addEventListener('change', startPlot);
 plotRetry.addEventListener('click', startPlot);
 
