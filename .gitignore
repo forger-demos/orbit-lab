@@ -8,3 +8,4 @@ coverage/
 .forger/events.jsonl
 .forger/declined.json
 .forger/verdicts/
+dist/
