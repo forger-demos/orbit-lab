@@ -1,4 +1,5 @@
 import {BODIES, orbitPathAu, positionAu, type Body} from '../core/ephemeris';
+import {type Vec3} from '../core/vec';
 import {project, type Viewport} from './projection';
 
 export interface Palette {
@@ -6,6 +7,13 @@ export interface Palette {
   foreground: string;
   muted: string;
   accent: string;
+}
+
+export interface Trip {
+  /** The transfer arc in heliocentric AU. */
+  pathAu: readonly Vec3[];
+  /** Null before launch is reached or when the ship's position is unavailable. */
+  shipAu: Vec3 | null;
 }
 
 export const LABELS: Record<Body, string> = {
@@ -24,6 +32,7 @@ export function drawSolarSystem(
   view: Viewport,
   date: Date,
   palette: Palette,
+  trip: Trip | null = null,
 ): void {
   ctx.clearRect(0, 0, view.width, view.height);
   ctx.fillStyle = palette.background;
@@ -42,6 +51,19 @@ export function drawSolarSystem(
     ctx.stroke();
   }
   ctx.globalAlpha = 1;
+
+  if (trip && trip.pathAu.length > 1) {
+    ctx.beginPath();
+    trip.pathAu.forEach((p, i) => {
+      const {x, y} = project(p, view);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = palette.accent;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.lineWidth = 1;
+  }
 
   const sun = project([0, 0, 0], view);
   ctx.fillStyle = palette.foreground;
@@ -64,5 +86,21 @@ export function drawSolarSystem(
     const onRight = x > view.width / 2;
     ctx.textAlign = onRight ? 'right' : 'left';
     ctx.fillText(LABELS[body], x + (onRight ? -8 : 8), isEarth ? y - 11 : y);
+  }
+
+  if (trip?.shipAu) {
+    const {x, y} = project(trip.shipAu, view);
+    ctx.beginPath();
+    ctx.moveTo(x, y - 7);
+    ctx.lineTo(x + 6, y);
+    ctx.lineTo(x, y + 7);
+    ctx.lineTo(x - 6, y);
+    ctx.closePath();
+    ctx.fillStyle = palette.background;
+    ctx.fill();
+    ctx.strokeStyle = palette.accent;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.lineWidth = 1;
   }
 }
